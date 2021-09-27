@@ -2,15 +2,28 @@ package client
 
 import (
 	"context"
+	"os"
 
 	"cloud.google.com/go/datastore"
 	"github.com/SlothNinja/log"
-	"github.com/SlothNinja/sn"
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 )
+
+const (
+	GAE_VERSION = "GAE_VERSION"
+	NODE_ENV    = "NODE_ENV"
+	production  = "production"
+)
+
+// IsProduction returns true if NODE_ENV environment variable is equal to "production".
+// GAE sets NODE_ENV environement to "production" on deployment.
+// NODE_ENV can be overridden in app.yaml configuration.
+func IsProduction() bool {
+	return os.Getenv(NODE_ENV) == production
+}
 
 type Client struct {
 	DS     *datastore.Client
@@ -37,7 +50,7 @@ func NewClient(ctx context.Context, opt Options) *Client {
 	opt.Logger.Debugf(msgEnter)
 	defer opt.Logger.Debugf(msgExit)
 
-	if sn.IsProduction() {
+	if IsProduction() {
 		opt.Logger.Debugf("production")
 		dsClient, err := datastore.NewClient(ctx, opt.ProjectID)
 		if err != nil {
